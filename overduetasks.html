@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+  <link rel="stylesheet" href="overduetasks.css">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      getDocs, 
+      query, 
+      where, 
+      deleteDoc, 
+      doc 
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYlkegf1dB9jqos4L_0OJQAuHsvwtXLRs",
+      authDomain: "fir-f3118.firebaseapp.com",
+      projectId: "fir-f3118",
+      storageBucket: "fir-f3118.appspot.com",
+      messagingSenderId: "643235197610",
+      appId: "1:643235197610:web:dea2c634dc8145f90796d3",
+      measurementId: "G-6XECBE3ESH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userEmail = user.email;
+        console.log(`User logged in: ${userEmail}`);
+        monitorTasks(userEmail);
+      } else {
+        console.log('User not authenticated, redirecting to login.');
+        window.location.href = 'login.html';
+      }
+    });
+
+    async function monitorTasks(userEmail) {
+      const today = new Date().toISOString().split('T')[0]; // Current date in YYYY-MM-DD format
+
+      const tasksQuery = query(collection(db, 'tasks'), where('email', '==', userEmail));
+      const allTasksElement = document.getElementById('taskList');
+      const overdueTasksElement = document.getElementById('overdueList');
+
+      allTasksElement.innerHTML = '';
+      overdueTasksElement.innerHTML = '';
+
+      try {
+        const querySnapshot = await getDocs(tasksQuery);
+        let taskIndex = 1; // Index for all tasks
+        let overdueIndex = 1; // Index for overdue tasks
+
+        querySnapshot.forEach(async (documentSnapshot) => {
+          const taskData = documentSnapshot.data();
+          const taskId = documentSnapshot.id;
+
+          if (taskData.end < today) {
+            // Overdue task
+            const overdueItem = document.createElement('li');
+            overdueItem.textContent = `${overdueIndex}. ${taskData.task} (From: ${taskData.start} To: ${taskData.end})`;
+
+            // Add Delete Button for Overdue Tasks
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', async () => {
+              try {
+                await deleteDoc(doc(db, 'tasks', taskId));
+                console.log('Overdue task deleted successfully');
+                monitorTasks(userEmail);
+              } catch (error) {
+                console.error('Error deleting overdue task:', error);
+              }
+            });
+
+            overdueItem.appendChild(deleteButton);
+            overdueTasksElement.appendChild(overdueItem);
+            overdueIndex++; // Increment overdue task index
+          } else {
+            // All tasks
+            const allTaskItem = document.createElement('li');
+            allTaskItem.textContent = `${taskIndex}. ${taskData.task} (From: ${taskData.start} To: ${taskData.end})`;
+            allTasksElement.appendChild(allTaskItem);
+            taskIndex++; // Increment all task index
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Task Manager</h1>
+
+  <h2>All Tasks</h2>
+  <ul id="taskList"></ul>
+
+  <h2>Overdue Tasks</h2>
+  <ul id="overdueList"></ul>
+</body>
+</html>

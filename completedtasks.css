@@ -1,0 +1,91 @@
+/* General styles for Pending Tasks */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(to bottom right, #74b9ff, #a29bfe);
+    color: #2d3436;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #fff;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+/* Task list styles */
+ul {
+    list-style: decimal; /* Changes the list to a numbered format */
+    padding: 0;
+    margin: 0 auto;
+    max-width: 600px;
+}
+
+li {
+    background-color: #ffffff;
+    border: 2px solid #dfe6e9;
+    border-radius: 10px;
+    margin: 10px 0;
+    padding: 10px 15px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+li:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Complete button styles */
+li button.complete {
+    background-color: #6c5ce7;
+    color: #fff;
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+li button.complete:hover {
+    background-color: #a29bfe;
+    transform: scale(1.05);
+}
+
+/* Delete button styles (for pending tasks, if needed) */
+li button.delete {
+    background-color: #d63031;
+    color: #fff;
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+li button.delete:hover {
+    background-color: #ff7675;
+    transform: scale(1.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    li {
+        max-width: 90%;
+    }
+}

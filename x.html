@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+
+  <!-- Add Firebase SDK v9+ (modular) -->
+  <script type="module">
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYlkegf1dB9jqos4L_0OJQAuHsvwtXLRs",
+      authDomain: "fir-f3118.firebaseapp.com",
+      projectId: "fir-f3118",
+      storageBucket: "fir-f3118.firebasestorage.app",
+      messagingSenderId: "643235197610",
+      appId: "1:643235197610:web:dea2c634dc8145f90796d3",
+      measurementId: "G-6XECBE3ESH"
+    };
+
+    // Import Firebase SDK (modular)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Task form submission
+    document.getElementById('taskForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const taskInput = document.getElementById('taskInput').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+
+      const task = {
+        task: taskInput,
+        start: startDate,
+        end: endDate
+      };
+
+      // Add task to Firebase Firestore
+      addDoc(collection(db, 'tasks'), task)
+        .then(() => {
+          document.getElementById('taskForm').reset();
+          renderTasks(); // Refresh task list
+        })
+        .catch(error => console.error("Error adding task: ", error));
+    });
+
+    // Render tasks from Firebase
+    function renderTasks() {
+      const taskListElement = document.getElementById('taskList');
+      taskListElement.innerHTML = ''; // Clear the list
+
+      // Get tasks from Firestore
+      getDocs(collection(db, 'tasks'))
+        .then(querySnapshot => {
+          querySnapshot.forEach(doc => {
+            const taskData = doc.data();
+            const li = document.createElement('li');
+            li.textContent = `${taskData.task} (From: ${taskData.start} To: ${taskData.end})`;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.style.marginLeft = '10px';
+
+            deleteButton.addEventListener('click', () => {
+                deleteTask(doc.id); // Pass the document ID to delete
+            });
+
+            li.appendChild(deleteButton);
+            taskListElement.appendChild(li);
+          });
+        })
+        .catch(error => console.error("Error fetching tasks: ", error));
+    }
+
+    // Delete task from Firebase
+    function deleteTask(taskId) {
+      // Delete the task from Firebase Firestore
+      deleteDoc(doc(db, 'tasks', taskId))
+        .then(() => {
+          renderTasks(); // Refresh the task list
+        })
+        .catch(error => console.error("Error deleting task: ", error));
+    }
+
+    // Fetch and render tasks when the page is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      renderTasks();
+    });
+  </script>
+
+  <!-- Style the page for a better appearance -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      background-color: #fff;
+      margin: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    button {
+      background-color: red;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: darkred;
+    }
+  </style>
+
+</head>
+<body>
+
+  <h1>Task Manager</h1>
+
+  <!-- Task Input Form -->
+  <form id="taskForm">
+    <input type="text" id="taskInput" placeholder="Enter Task" required>
+    <input type="date" id="startDate" required>
+    <input type="date" id="endDate" required>
+    <button type="submit">Add Task</button>
+  </form>
+
+  <!-- Task List -->
+  <ul id="taskList"></ul>
+
+</body>
+</html>

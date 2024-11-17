@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pending Tasks</title>
+  <link rel="stylesheet" href="pendingtasks.css">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      getDocs, 
+      query, 
+      where, 
+      deleteDoc, 
+      doc, 
+      addDoc 
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYlkegf1dB9jqos4L_0OJQAuHsvwtXLRs",
+      authDomain: "fir-f3118.firebaseapp.com",
+      projectId: "fir-f3118",
+      storageBucket: "fir-f3118.appspot.com",
+      messagingSenderId: "643235197610",
+      appId: "1:643235197610:web:dea2c634dc8145f90796d3",
+      measurementId: "G-6XECBE3ESH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userEmail = user.email;
+        console.log(`User logged in: ${userEmail}`);
+        monitorTasks(userEmail);
+      } else {
+        console.log('User not authenticated, redirecting to login.');
+        window.location.href = 'login.html';
+      }
+    });
+
+    async function monitorTasks(userEmail) {
+      const today = new Date().toISOString().split('T')[0]; // Current date in YYYY-MM-DD format
+
+      const tasksQuery = query(collection(db, 'tasks'), where('email', '==', userEmail));
+      const overdueTasksQuery = query(collection(db, 'overdue_tasks'), where('email', '==', userEmail));
+      const allTasksElement = document.getElementById('taskList');
+
+      allTasksElement.innerHTML = ''; // Clear the task list before repopulating it
+
+      try {
+        const tasksSnapshot = await getDocs(tasksQuery);
+        const overdueSnapshot = await getDocs(overdueTasksQuery);
+        let allTasks = [];
+
+        tasksSnapshot.forEach((documentSnapshot) => {
+          const taskData = documentSnapshot.data();
+          const taskId = documentSnapshot.id;
+          if (taskData.end >= today) { // Upcoming task
+            allTasks.push({ ...taskData, id: taskId, isOverdue: false });
+          }
+        });
+
+        overdueSnapshot.forEach((documentSnapshot) => {
+          const taskData = documentSnapshot.data();
+          const taskId = documentSnapshot.id;
+          allTasks.push({ ...taskData, id: taskId, isOverdue: true });
+        });
+
+        // Sort tasks by their 'end' date in ascending order
+        allTasks.sort((a, b) => new Date(a.end) - new Date(b.end));
+
+        // Render the tasks
+        let taskIndex = 1; // Initialize task index for numbering tasks
+        allTasks.forEach((taskData) => {
+          const taskItem = document.createElement('li');
+          taskItem.textContent = `${taskIndex}. ${taskData.task} (From: ${taskData.start} To: ${taskData.end})`;
+
+          // Add Complete Button for Pending Tasks
+          const completeButton = document.createElement('button');
+          completeButton.textContent = 'Complete';
+          completeButton.addEventListener('click', async () => {
+            try {
+              // Move task to the completed_tasks collection
+              await addDoc(collection(db, 'completed_tasks'), {
+                task: taskData.task,
+                start: taskData.start,
+                end: taskData.end,
+                email: taskData.email,
+                originalTaskId: taskData.id,
+                completedAt: new Date().toISOString() // Current time when completed
+              });
+
+              // Remove task from the current collection (tasks or overdue_tasks)
+              if (taskData.isOverdue) {
+                await deleteDoc(doc(db, 'overdue_tasks', taskData.id));
+              } else {
+                await deleteDoc(doc(db, 'tasks', taskData.id));
+              }
+
+              console.log('Task marked as completed');
+              monitorTasks(userEmail); // Refresh the task list
+            } catch (error) {
+              console.error('Error completing task:', error);
+            }
+          });
+
+          taskItem.appendChild(completeButton);
+          allTasksElement.appendChild(taskItem);
+
+          taskIndex++; // Increment the task index for the next task
+        });
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Pending Tasks</h1>
+
+  <ul id="taskList"></ul>
+</body>
+</html>

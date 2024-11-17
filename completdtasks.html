@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Completed Tasks</title>
+  <link rel="stylesheet" href="completedtasks.css">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      getDocs, 
+      query, 
+      where 
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYlkegf1dB9jqos4L_0OJQAuHsvwtXLRs",
+      authDomain: "fir-f3118.firebaseapp.com",
+      projectId: "fir-f3118",
+      storageBucket: "fir-f3118.appspot.com",
+      messagingSenderId: "643235197610",
+      appId: "1:643235197610:web:dea2c634dc8145f90796d3",
+      measurementId: "G-6XECBE3ESH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userEmail = user.email;
+        console.log(`User logged in: ${userEmail}`);
+        displayCompletedTasks(userEmail);
+      } else {
+        console.log('User not authenticated, redirecting to login.');
+        window.location.href = 'login.html';
+      }
+    });
+
+    async function displayCompletedTasks(userEmail) {
+      const completedTasksQuery = query(collection(db, 'completed_tasks'), where('email', '==', userEmail));
+      const completedTasksElement = document.getElementById('completedTasksList');
+
+      completedTasksElement.innerHTML = ''; // Clear the list before repopulating
+
+      try {
+        const querySnapshot = await getDocs(completedTasksQuery);
+        let completedTasks = [];
+
+        querySnapshot.forEach((documentSnapshot) => {
+          const taskData = documentSnapshot.data();
+          const taskId = documentSnapshot.id;
+          completedTasks.push({ ...taskData, id: taskId });
+        });
+
+        // Sort completed tasks by the 'completedAt' or 'end' date
+        completedTasks.sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
+
+        completedTasks.forEach((taskData, index) => {
+          const taskItem = document.createElement('li');
+          taskItem.textContent = `${index + 1}. ${taskData.task} (Completed on: ${new Date(taskData.completedAt).toLocaleDateString()})`;
+
+          completedTasksElement.appendChild(taskItem);
+        });
+      } catch (error) {
+        console.error('Error fetching completed tasks:', error);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Completed Tasks</h1>
+
+  <ul id="completedTasksList"></ul>
+</body>
+</html>

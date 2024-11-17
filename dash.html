@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="dash.css">
+</head>
+<body>
+    <input type="checkbox" id="checkbox">
+    <header class="header">
+        <h2 class="u-name">Task Manager</h2>
+        <label for="checkbox">
+            <i id="navbtn" class="fa fa-bars" aria-hidden="true"></i>
+        </label>
+        
+        
+	
+    </header>
+    <div class="body">
+        <nav class="side-bar">
+            <div class="user-p">
+                <img src="user.jpg" alt="User Image">
+                <h4 id="firstName">welcome user</h4>
+                <a href="profile.html">
+                <button>Profile</button>
+                </a>
+            </div>
+            <ul>
+                <li>
+                    <a href="#">
+                        <i class="fa fa-tasks" aria-hidden="true"></i>
+                        <span><a href="tasks.html">My Tasks</a></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                        <span><a href="overduetasks.html">Overdue </a></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fa fa-calendar" aria-hidden="true"></i>
+                        <span><a href="upcomingtasks.html">Upcoming</a></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fa fa-clock-o" aria-hidden="true"></i>
+                        <span><a href="pendingtasks.html">Pending</a></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fa fa-flag" aria-hidden="true"></i>
+                        <span><a href="prioritytasks.html">Priority</a></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fa fa-check" aria-hidden="true"></i>
+                        <span><a href="completdtasks.html">Completed Tasks</a></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fa fa-power-off" aria-hidden="true"></i>
+                        <span><a href="index.html">Logout</a></span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <section class="section-1">
+            <div class="task-sections">
+                <div class="task-card"> <a href="tasks.html">My Task</a></div>
+                <div class="task-card"><a href="overduetasks.html">Overdue</a></div>
+                <div class="task-card"><a href="upcomingtasks.html">Upcoming Task</a></div>
+                <div class="task-card"><a href="pendingtasks.html">Pending</a></div>
+                <div class="task-card"><a href="prioritytasks.html">Priority</a></div>
+                <div class="task-card"><a href="completdtasks.html">Completed</a></div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

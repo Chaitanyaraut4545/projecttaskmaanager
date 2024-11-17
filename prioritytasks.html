@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priority Tasks</title>
+  <link rel="stylesheet" href="prioritytasks.css">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      query,
+      where,
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYlkegf1dB9jqos4L_0OJQAuHsvwtXLRs",
+      authDomain: "fir-f3118.firebaseapp.com",
+      projectId: "fir-f3118",
+      storageBucket: "fir-f3118.appspot.com",
+      messagingSenderId: "643235197610",
+      appId: "1:643235197610:web:dea2c634dc8145f90796d3",
+      measurementId: "G-6XECBE3ESH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userEmail = user.email;
+        displayTasks(userEmail);
+      } else {
+        console.log('User not authenticated, redirecting to login.');
+        window.location.href = 'login.html';
+      }
+    });
+
+    async function displayTasks(userEmail) {
+      const tasksQuery = query(collection(db, 'tasks'), where('email', '==', userEmail));
+      const highPriorityElement = document.getElementById('highPriorityTasks');
+      const mediumPriorityElement = document.getElementById('mediumPriorityTasks');
+      const lowPriorityElement = document.getElementById('lowPriorityTasks');
+
+      highPriorityElement.innerHTML = '';
+      mediumPriorityElement.innerHTML = '';
+      lowPriorityElement.innerHTML = '';
+
+      try {
+        const querySnapshot = await getDocs(tasksQuery);
+        let tasks = [];
+
+        querySnapshot.forEach((documentSnapshot) => {
+          const taskData = documentSnapshot.data();
+          const taskId = documentSnapshot.id;
+          const currentDate = new Date();
+          const endDate = new Date(taskData.end);
+          const daysRemaining = Math.ceil((endDate - currentDate) / (1000 * 60 * 60 * 24));
+
+          tasks.push({ ...taskData, id: taskId, daysRemaining });
+        });
+
+        // Sort tasks by deadline
+        tasks.sort((a, b) => new Date(a.end) - new Date(b.end));
+
+        tasks.forEach((task, index) => {
+          const taskItem = document.createElement('li');
+          const priorityTag = document.createElement('span');
+
+          // Assign priority based on days remaining
+          if (task.daysRemaining <= 7) {
+            priorityTag.className = 'priority high';
+            priorityTag.textContent = 'High Priority';
+            taskItem.textContent = `${index + 1}. ${task.task} (Remaining: ${task.daysRemaining} days) `;
+            taskItem.appendChild(priorityTag);
+            highPriorityElement.appendChild(taskItem);
+          } else if (task.daysRemaining <= 15) {
+            priorityTag.className = 'priority medium';
+            priorityTag.textContent = 'Medium Priority';
+            taskItem.textContent = `${index + 1}. ${task.task} (Remaining: ${task.daysRemaining} days) `;
+            taskItem.appendChild(priorityTag);
+            mediumPriorityElement.appendChild(taskItem);
+          } else {
+            priorityTag.className = 'priority low';
+            priorityTag.textContent = 'Low Priority';
+            taskItem.textContent = `${index + 1}. ${task.task} (Remaining: ${task.daysRemaining} days) `;
+            taskItem.appendChild(priorityTag);
+            lowPriorityElement.appendChild(taskItem);
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Priority Tasks</h1>
+
+  <div class="task-columns">
+    <div>
+      <h2>High Priority (Tasks to complete in 7 days or less)</h2>
+      <ul id="highPriorityTasks"></ul>
+    </div>
+    <div>
+      <h2>Medium Priority (Tasks to complete in 8-15 days)</h2>
+      <ul id="mediumPriorityTasks"></ul>
+    </div>
+    <div>
+      <h2>Low Priority (Tasks with more than 15 days remaining)</h2>
+      <ul id="lowPriorityTasks"></ul>
+    </div>
+  </div>
+</body>
+</html>

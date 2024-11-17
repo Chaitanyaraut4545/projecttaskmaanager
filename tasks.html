@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+  <link rel="stylesheet" href="tasks.css">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYlkegf1dB9jqos4L_0OJQAuHsvwtXLRs",
+      authDomain: "fir-f3118.firebaseapp.com",
+      projectId: "fir-f3118",
+      storageBucket: "fir-f3118.appspot.com",
+      messagingSenderId: "643235197610",
+      appId: "1:643235197610:web:dea2c634dc8145f90796d3",
+      measurementId: "G-6XECBE3ESH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userEmail = user.email;
+        console.log(`User logged in: ${userEmail}`);
+        renderTasks(userEmail);
+
+        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const taskInput = document.getElementById('taskInput').value;
+          const startDate = document.getElementById('startDate').value;
+          const endDate = document.getElementById('endDate').value;
+
+          try {
+            if (!taskInput || !startDate || !endDate) {
+              alert("All fields are required!");
+              return;
+            }
+            await addDoc(collection(db, 'tasks'), {
+              task: taskInput,
+              start: startDate,
+              end: endDate,
+              email: userEmail
+            });
+            console.log('Task added successfully');
+            renderTasks(userEmail);
+            document.getElementById('taskForm').reset();
+          } catch (error) {
+            console.error('Error adding task: ', error);
+          }
+        });
+      } else {
+        console.log('User not authenticated, redirecting to login.');
+        window.location.href = 'login.html';
+      }
+    });
+
+    async function renderTasks(userEmail) {
+      const taskListElement = document.getElementById('taskList');
+      taskListElement.innerHTML = '';
+
+      const tasksQuery = query(collection(db, 'tasks'), where('email', '==', userEmail));
+
+      try {
+        const querySnapshot = await getDocs(tasksQuery);
+        console.log(`Tasks fetched: ${querySnapshot.size}`);
+        let index = 1; // Initialize task index
+        querySnapshot.forEach((documentSnapshot) => {
+          const taskData = documentSnapshot.data();
+          const taskId = documentSnapshot.id;
+          const li = document.createElement('li');
+          li.textContent = `${index}. ${taskData.task} (From: ${taskData.start} To: ${taskData.end})`;
+
+          const deleteButton = document.createElement('button');
+          deleteButton.textContent = 'Delete';
+          deleteButton.style.marginLeft = '10px';
+
+          deleteButton.addEventListener('click', async () => {
+            try {
+              await deleteDoc(doc(db, 'tasks', taskId));
+              console.log('Task deleted successfully');
+              renderTasks(userEmail);
+            } catch (error) {
+              console.error('Error deleting task: ', error);
+            }
+          });
+
+          li.appendChild(deleteButton);
+          taskListElement.appendChild(li);
+          index++; // Increment the task index for the next task
+        });
+      } catch (error) {
+        console.error('Error fetching tasks: ', error);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>My Tasks</h1>
+  
+  <form id="taskForm">
+    <input type="text" id="taskInput" placeholder="Enter Task" required>
+    <input type="date" id="startDate" required>
+    <input type="date" id="endDate" required>
+    <button type="submit">Add Task</button>
+  </form>
+  
+  <ul id="taskList"></ul>
+</body>
+</html>

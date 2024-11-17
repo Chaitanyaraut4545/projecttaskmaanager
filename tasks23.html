@@ -1,0 +1,105 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCYlkegf1dB9jqos4L_0OJQAuHsvwtXLRs",
+  authDomain: "fir-f3118.firebaseapp.com",
+  projectId: "fir-f3118",
+  storageBucket: "fir-f3118.firebasestorage.app",
+  messagingSenderId: "643235197610",
+  appId: "1:643235197610:web:dea2c634dc8145f90796d3",
+  measurementId: "G-6XECBE3ESH"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Ensure DOM is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  const taskForm = document.getElementById("taskForm");
+  const taskListElement = document.getElementById("taskList");
+
+  // Handle authentication state
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const userEmail = user.email;
+      renderTasks(userEmail);
+
+      // Add task
+      taskForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const taskInput = document.getElementById("taskInput").value.trim();
+        const startDate = document.getElementById("startDate").value.trim();
+        const endDate = document.getElementById("endDate").value.trim();
+
+        if (!taskInput || !startDate || !endDate) {
+          alert("Please fill in all fields.");
+          return;
+        }
+
+        if (new Date(endDate) < new Date(startDate)) {
+          alert("End date must be after start date.");
+          return;
+        }
+
+        try {
+          await addDoc(collection(db, "tasks"), {
+            task: taskInput,
+            start: startDate,
+            end: endDate,
+            email: userEmail, // Associate task with user
+          });
+          alert("Task added successfully!");
+          renderTasks(userEmail); // Refresh tasks
+        } catch (error) {
+          console.error("Error adding task: ", error);
+          alert("Failed to add task.");
+        }
+      });
+    } else {
+      // Redirect to login page if not authenticated
+      alert("You are not logged in. Redirecting to login page.");
+      window.location.href = "login.html";
+    }
+  });
+
+  function renderTasks(userEmail) {
+    taskListElement.innerHTML = "";
+
+    const tasksQuery = query(collection(db, "tasks"), where("email", "==", userEmail));
+
+    getDocs(tasksQuery)
+      .then((querySnapshot) => {
+        querySnapshot.forEach((docSnapshot) => {
+          const taskData = docSnapshot.data();
+          const li = document.createElement("li");
+          li.textContent = `${taskData.task} (From: ${taskData.start} To: ${taskData.end})`;
+
+          const deleteButton = document.createElement("button");
+          deleteButton.textContent = "Delete";
+          deleteButton.style.marginLeft = "10px";
+
+          deleteButton.addEventListener("click", async () => {
+            try {
+              await deleteDoc(doc(db, "tasks", docSnapshot.id));
+              alert("Task deleted successfully!");
+              renderTasks(userEmail); // Refresh tasks
+            } catch (error) {
+              console.error("Error deleting task: ", error);
+              alert("Failed to delete task.");
+            }
+          });
+
+          li.appendChild(deleteButton);
+          taskListElement.appendChild(li);
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching tasks: ", error);
+        alert("Failed to load tasks.");
+      });
+  }
+});
