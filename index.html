@@ -6,11 +6,10 @@
   <title>Login or Signup</title>
   <link rel="stylesheet" href="log.css">
 
-
   <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCYlkegf1dB9jqos4L_0OJQAuHsvwtXLRs",
@@ -25,13 +24,13 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Signup handler
     document.addEventListener('DOMContentLoaded', () => {
       const signupForm = document.getElementById('signupForm');
       const loginForm = document.getElementById('loginForm');
       const toggleToLogin = document.getElementById('toggleToLogin');
       const toggleToSignup = document.getElementById('toggleToSignup');
 
+      // Signup handler
       signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const firstName = document.getElementById('firstName').value.trim();
@@ -45,7 +44,15 @@
         }
 
         try {
-          await createUserWithEmailAndPassword(auth, email, password);
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+
+          // Set the display name
+          await updateProfile(user, {
+            displayName: `${firstName} ${lastName}`
+          });
+
+          alert('Signup successful!');
           window.location.href = 'dash.html';
         } catch (error) {
           alert(`Signup error: ${error.message}`);
@@ -66,7 +73,7 @@
         }
       });
 
-      // Toggle forms
+      // Toggle between forms
       toggleToLogin.addEventListener('click', () => {
         signupForm.style.display = 'none';
         loginForm.style.display = 'block';
@@ -78,8 +85,6 @@
       });
     });
   </script>
-
-  
 </head>
 <body>
   <form id="signupForm" style="display: block;">
@@ -92,7 +97,7 @@
     <p id="toggleToLogin">Already have an account? Login</p>
   </form>
 
-  <form id="loginForm">
+  <form id="loginForm" style="display: none;">
     <h2>Login</h2>
     <input type="email" id="loginEmail" placeholder="Email" required>
     <input type="password" id="loginPassword" placeholder="Password" required>
