@@ -25,14 +25,16 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // On authentication state change (user login or logout)
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Display user information
-        document.getElementById('userEmail').textContent = user.email;
-        document.getElementById('welcomeMessage').textContent = `Welcome, ${user.email}`;
+        const { email, displayName } = user;
+        const [firstName, lastName] = displayName ? displayName.split(" ") : ["Unknown", "User"];
+
+        document.getElementById('userEmail').textContent = email;
+        document.getElementById('firstName').textContent = firstName;
+        document.getElementById('lastName').textContent = lastName;
+        document.getElementById('welcomeMessage').textContent = `Welcome, ${firstName} ${lastName}`;
       } else {
-        // Redirect to login page if user is not logged in
         window.location.href = 'login.html';
       }
     });
@@ -41,8 +43,9 @@
 <body>
   <div class="profile-container">
     <h1 id="welcomeMessage">Welcome, User</h1>
+    <p>First Name: <span id="firstName">Loading...</span></p>
+    <p>Last Name: <span id="lastName">Loading...</span></p>
     <p>Email: <span id="userEmail">Loading...</span></p>
-    <!-- Updated the back button to redirect to dash.html -->
     <button onclick="window.location.href='dash.html'">Back to Dashboard</button>
   </div>
 </body>
